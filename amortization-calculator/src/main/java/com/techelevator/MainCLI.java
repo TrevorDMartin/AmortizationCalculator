@@ -3,46 +3,63 @@ package com.techelevator;
 import java.math.BigDecimal;
 import java.util.Scanner;
 
-public class MainProgram {
+/*
+       to calculate apy from apr
+       apr / compounds per year = periodic rate //calculate as a decimal
+       i = periodic interest rate
+       n = periods per year
+       APY(wholeNumber) = ((1 + i) ^ n) - 1
+
+       Example:
+
+       apr = 12%
+       r = 0.01 // 12% or .12 / 12(monthsPerYear) = 0.01
+       n = 12 (payments)
+       ((1 + .01) ^ 12) - 1 = 12.68%
+       APY = 12.68%
+        */ //TODO Formula to calculate APY if needed
+
+public class MainCLI {
+	// Menu Options
+	private static final int MENU_LOAN_MONTHLY_PAYMENT = 1;
+	private static final int MENU_LOAN_TIME_PERIOD = 2;
+	private static final int MENU_EXIT = 3;
+
+	private static BigDecimal principle;
+	private static BigDecimal interestRate;
+
+	private static LoanCalculator loan;
+
 	private static final Scanner scanner = new Scanner(System.in);
 
-	 /*
-		to calculate apy from apr
-		apr / compounds per year = periodic rate //calculate as a decimal
-		i = periodic interest rate
-		n = periods per year
-		APY(wholeNumber) = ((1 + i) ^ n) - 1
-
-		Example:
-
-		apr = 12%
-		r = 0.01 // 12% or .12 / 12(monthsPerYear) = 0.01
-		n = 12 (payments)
-		((1 + .01) ^ 12) - 1 = 12.68%
-		APY = 12.68%
-		 */ //TODO Formula to calculate APY if needed
-
 	public static void main(String[] args) {
-		int choice;
-		BigDecimal principle;
-		BigDecimal interestRate;
+		/*
+		I tried to write this program using OOP.
+		The MainCLI class deals with all input and output.
+		I set up the classes to throw exceptions containing useful messages
+		that the view controller can then output to the user.
+		 */
+
 		while (true) {
 			try {
-				choice = getUserChoice();
-				if (choice == 3) {
+				int choice = getUserChoice();
+
+				if (choice == MENU_EXIT) {
 					System.exit(0);
+					break;
 				}
+
 				principle = getPrinciple();
 				interestRate = getInterestRate();
 
-				if (choice==1){
+				if (choice==MENU_LOAN_MONTHLY_PAYMENT){
 					loanWithMonthlyPayment(principle, interestRate);
 				}
-				if (choice==2){
+
+				if (choice==MENU_LOAN_TIME_PERIOD){
 					loanWithTimePeriod(principle, interestRate);
 				}
 
-				break;
 			} catch (Exception e) {
 				System.out.println(e.getMessage());
 			}
@@ -50,9 +67,9 @@ public class MainProgram {
 	}
 
 	// TODO DEBUG FOR MONTHLY PAYMENTS THAT ARE LESS THAN INTEREST ACCRUED
-	// TODO FIGURE OUT HOW TO COMPOUND DAILY
 
 	private static int getUserChoice() throws Exception {
+
 		System.out.println("\nWould you like to amortize a loan with monthly payment or time period\n");
 		System.out.println("1) Monthly Payment");
 		System.out.println("2) Time Period");
@@ -67,10 +84,12 @@ public class MainProgram {
 
 		return choice;
 	}
+
 	private static BigDecimal getPrinciple() throws Exception {
+		BigDecimal principle;
 		System.out.println("\nPlease enter the starting principle.");
 		String userInput = scanner.nextLine();
-		BigDecimal principle;
+
 		try {
 			principle = new BigDecimal(userInput);
 		} catch (Exception e) {
@@ -83,10 +102,12 @@ public class MainProgram {
 
 		return principle;
 	}
+
 	private static BigDecimal getInterestRate() throws Exception {
+		BigDecimal interestRate;
 		System.out.println("\nPlease enter the yearly interest rate");
 		String userInput = scanner.nextLine();
-		BigDecimal interestRate;
+
 		try {
 			interestRate = new BigDecimal(userInput);
 		} catch (Exception e) {
@@ -115,9 +136,10 @@ public class MainProgram {
 			throw new Exception("Must input a number greater than 0.");
 		}
 
-		MonthlyPaymentLoan loan = new MonthlyPaymentLoan(principle, interestRate, monthlyPayment);
-		System.out.println(loan.amortizationSchedule());
+		loan = new LoanCalculator(principle, interestRate, monthlyPayment);
+		System.out.println("\nAmortization Schedule Given The Monthly Payments\n" + loan.amortizationSchedule());
 	}
+
 	private static void loanWithTimePeriod(BigDecimal principle, BigDecimal interestRate) throws Exception {
 
 		System.out.println("\nPlease enter the loan term in months");
@@ -129,12 +151,10 @@ public class MainProgram {
 		} catch (Exception e) {
 			throw new Exception("Must input a valid number");
 		}
-		if (loanTerm <= 0) {
-			throw new Exception("Must input a number greater than 0.");
-		}
 
-		TimeLineLoan loan = new TimeLineLoan(principle, interestRate, loanTerm);
-		System.out.println(loan.amortizationSchedule());
+
+		loan = new TimeLineLoan(principle, interestRate, loanTerm);
+		System.out.println("\nAmortization Schedule Given A Set Time Line For The Loan\n" + loan.amortizationSchedule());
 	}
 
 

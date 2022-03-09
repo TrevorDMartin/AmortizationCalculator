@@ -3,13 +3,39 @@ package com.techelevator;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
-public abstract class LoanCalculator {
+public class LoanCalculator {
     //Instance Variables
-    private BigDecimal initialPrinciple;
+    private final BigDecimal initialPrinciple;
     private BigDecimal currentPrinciple;
-    private BigDecimal interestRate;
+    private final BigDecimal interestRate;
+    private BigDecimal monthlyPayment;
 
     //Constructor
+    /**
+     *
+     * @param initialPrinciple The principle loan amount
+     * @param interestRate APR as a whole number or decimal
+     * @param monthlyPayment How much user wants to pay each month
+     */
+    public LoanCalculator(BigDecimal initialPrinciple, BigDecimal interestRate, BigDecimal monthlyPayment) throws Exception {
+        this.initialPrinciple = initialPrinciple;
+        currentPrinciple = initialPrinciple;
+
+        // Accept interest rate in decimal or percent format and convert automatically
+        if (interestRate.compareTo(BigDecimal.ONE)<0) {
+            this.interestRate = interestRate;
+        } else {
+            this.interestRate = interestRate.divide(new BigDecimal("100"), 10, RoundingMode.HALF_EVEN);
+        }
+
+        // Check to make sure monthlyPayment is greater than accrued interest
+        if (monthlyPayment.compareTo(getInterestAccrued()) > 0) {
+            this.monthlyPayment = monthlyPayment;
+        } else {
+            throw new Exception("Monthly payment must be more than monthly accrued interest.");
+        }
+    }
+
     /**
      *
      * @param initialPrinciple The principle loan amount
@@ -19,6 +45,7 @@ public abstract class LoanCalculator {
         this.initialPrinciple = initialPrinciple;
         currentPrinciple = initialPrinciple;
 
+        // Accept interest rate in decimal or percent format and convert automatically
         if (interestRate.compareTo(BigDecimal.ONE)<0) {
             this.interestRate = interestRate;
         } else {
@@ -26,53 +53,62 @@ public abstract class LoanCalculator {
         }
     }
 
-    //Getters
-    public BigDecimal getInitialPrinciple() {
+    protected void setMonthlyPayment(BigDecimal monthlyPayment) throws Exception {
+        // Check to make sure monthlyPayment is greater than accrued interest
+        if (monthlyPayment.compareTo(getInterestAccrued()) > 0) {
+            this.monthlyPayment = monthlyPayment;
+        } else {
+            throw new Exception("Monthly payment must be more than monthly accrued interest.");
+        }
+    }
+
+    protected BigDecimal getInitialPrinciple() {
         return initialPrinciple;
-    }
-    public BigDecimal getCurrentPrinciple() {
-        return currentPrinciple;
-    }
-    public BigDecimal getInterestRate() {
-        return interestRate;
     }
 
     //Methods
-    public BigDecimal interestRatePerMonth() {
-        return getInterestRate().divide(new BigDecimal("12"), 10, RoundingMode.HALF_EVEN);
+    public BigDecimal getInterestRatePerMonth() {
+        return interestRate.divide(new BigDecimal("12"), 10, RoundingMode.HALF_EVEN);
     }
-    public BigDecimal interestAccrued() {
-        return currentPrinciple.multiply(interestRatePerMonth());
+
+    public BigDecimal getInterestAccrued() {
+        return currentPrinciple.multiply(getInterestRatePerMonth());
     }
+
     public void makePayment (BigDecimal principalPayment) {
         currentPrinciple = currentPrinciple.subtract(principalPayment);
     }
+
     public BigDecimal principlePayment(BigDecimal monthlyPayment) {
-        if (monthlyPayment.compareTo(getCurrentPrinciple().add(interestAccrued()))>=0) {
-            return getCurrentPrinciple();
+        /*
+        If monthlyPayment is greater than or equal to currentPrinciple + accrued interest,
+        Only deduct the current principle for the principlePayment.
+        Otherwise, deduct the monthlyPayment - interest accrued.
+         */
+        if (monthlyPayment.compareTo(currentPrinciple.add(getInterestAccrued()))>=0) {
+            return currentPrinciple;
         }
-        return monthlyPayment.subtract(interestAccrued());
+        return monthlyPayment.subtract(getInterestAccrued());
     }
-    public String amortizationSchedule(BigDecimal monthlyPayment, String header) {
+
+    public String amortizationSchedule() {
         int month = 0;
 
-        String schedule = header==null ? "" : header;
-        schedule += "\n  | Beginning | Interest | Principle | Remaining\n";
+        String schedule = "\n  | Beginning | Interest | Principle | Remaining\n";
 
-        while ((getCurrentPrinciple().setScale(4, RoundingMode.DOWN)).compareTo(BigDecimal.ZERO) >0) {
+        while ((currentPrinciple.setScale(4, RoundingMode.DOWN)).compareTo(BigDecimal.ZERO) >0) {
             month++;
 
             schedule += "\n" + month;
-            schedule += " | $" + String.format("%.2f", getCurrentPrinciple());
-            schedule += " | $" + String.format("%.2f", interestAccrued());
+            schedule += " | $" + String.format("%.2f", currentPrinciple);
+            schedule += " | $" + String.format("%.2f", getInterestAccrued());
             schedule += " | $" + String.format("%.2f", principlePayment(monthlyPayment));
 
             makePayment(principlePayment(monthlyPayment));
 
-            schedule += " | $" + String.format("%.2f", getCurrentPrinciple());
+            schedule += " | $" + String.format("%.2f", currentPrinciple);
         }
         return schedule;
     }
-
 }
 

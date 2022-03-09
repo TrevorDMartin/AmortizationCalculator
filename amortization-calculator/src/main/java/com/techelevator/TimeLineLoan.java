@@ -1,11 +1,13 @@
 package com.techelevator;
 
 import java.math.BigDecimal;
-import java.math.MathContext;
 import java.math.RoundingMode;
 
 public class TimeLineLoan extends LoanCalculator {
     private final int loanTerm;
+    private BigDecimal numerator;
+    private BigDecimal denominator;
+    private BigDecimal monthlyPayment;
 
     /**
      *
@@ -13,9 +15,18 @@ public class TimeLineLoan extends LoanCalculator {
      * @param interestRate APR as a whole number or decimal
      * @param loanTerm Length of loan in months
      */
-    public TimeLineLoan(BigDecimal initialPrinciple, BigDecimal interestRate, int loanTerm) {
+    public TimeLineLoan(BigDecimal initialPrinciple, BigDecimal interestRate, int loanTerm) throws Exception {
+
         super(initialPrinciple, interestRate);
-        this.loanTerm = loanTerm;
+
+        if (loanTerm <= 0) {
+            throw new Exception("Loan term value must be greater than zero.");
+        } else {
+            this.loanTerm = loanTerm;
+        }
+
+        monthlyPayments();
+        super.setMonthlyPayment(monthlyPayment);
     }
 
     /*   TODO This formula works for monthly payments with monthly compounds
@@ -34,35 +45,42 @@ public class TimeLineLoan extends LoanCalculator {
 
        Monthly Payments = (initialPrinciple * interestRatePerMonth) / (1 - ((1 + interestRatePerMonth) ^ -(loanTerm)))
         */ //TODO I don't think it works with monthly payments and daily compounds
-    //Methods
-    private BigDecimal numeratorFormula() {
-        //numerator = (initialPrinciple * interestRatePerMonth)
-        BigDecimal numerator;
-        numerator = getInitialPrinciple().multiply(interestRatePerMonth());
-        return numerator;
-    }
-    private BigDecimal denominatorFormula() {
-        // denominator = (1 - ((1 + interestRatePerMonth) ^ -(loanTerm)))
-        BigDecimal denominator;
-        // interestRatePerMonth + 1
-        denominator = interestRatePerMonth().add(BigDecimal.ONE);
-        // raise to the power of loanTerm
-        denominator = denominator.pow(loanTerm).setScale(32, RoundingMode.HALF_EVEN);
-        // 1 / denominator is the same a raising denominator to a negative power.
-        denominator = BigDecimal.ONE.divide(denominator, 32 , RoundingMode.HALF_EVEN);
-        // subtract result from one
-        denominator = BigDecimal.ONE.subtract(denominator);
-        return denominator;
 
+    //Methods
+    public void monthlyPayments() {
+
+        numeratorFormula();
+        denominatorFormula();
+
+        monthlyPayment = numerator.divide(denominator, 4, RoundingMode.HALF_EVEN);
     }
-    public BigDecimal monthlyPayments() {
-        BigDecimal monthlyPayment;
-        monthlyPayment = numeratorFormula().divide(denominatorFormula(), 4, RoundingMode.HALF_EVEN);
-        return monthlyPayment;
+    private void numeratorFormula() {
+        /*
+        NUMERATOR FORMULA
+        (P * i)
+        (initialPrinciple * interestRatePerMonth)
+         */
+
+        numerator = super.getInitialPrinciple().multiply(super.getInterestRatePerMonth());
     }
-    public String amortizationSchedule() {
-        String header = "\nAmortization Schedule Given A Set Time Line For The Loan\n";
-        return super.amortizationSchedule(monthlyPayments(), header);
+    private void denominatorFormula() {
+        /*
+        DENOMINATOR FORMULA
+        {1 - [(1 + i) ^ -n]}
+        (1 - ((1 + interestRatePerMonth) ^ -(loanTerm)))
+        (1 - (1 / ((1 + interestRatePerMonth) ^ loanTerm)))
+
+        ORDER OF OPERATIONS
+        1 + interestRatePerMonth
+        this ^ loanTerm
+        1 / this
+        1 - this
+         */
+
+        denominator = super.getInterestRatePerMonth().add(BigDecimal.ONE);
+        denominator = denominator.pow(loanTerm).setScale(32, RoundingMode.HALF_EVEN);
+        denominator = BigDecimal.ONE.divide(denominator, 32 , RoundingMode.HALF_EVEN);
+        denominator = BigDecimal.ONE.subtract(denominator);
     }
 
 

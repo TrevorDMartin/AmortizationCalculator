@@ -26,9 +26,9 @@
     <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
   </component>
-  <component name="RunManager" selected="Application.MainProgram">
-    <configuration name="MainProgram" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
-      <option name="MAIN_CLASS_NAME" value="com.techelevator.MainProgram" />
+  <component name="RunManager" selected="Application.MainCLI">
+    <configuration name="MainCLI" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="com.techelevator.MainCLI" />
       <module name="starter-code" />
       <extension name="coverage">
         <pattern>
@@ -105,7 +105,7 @@
     </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="Application.MainProgram" />
+        <item itemvalue="Application.MainCLI" />
         <item itemvalue="JUnit.LoanCalculatorTest.test_compound_per_month" />
         <item itemvalue="JUnit.LoanCalculatorTest" />
         <item itemvalue="JUnit.LoanCalculatorTest.test_get_interest_and_get_interest_whole_number" />
